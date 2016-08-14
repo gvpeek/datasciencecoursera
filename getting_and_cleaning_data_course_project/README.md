@@ -3,11 +3,11 @@
 This script assumes you have downloaded the file "UCI HAR Dataset.zip", available [here](https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip), and are in the top level directory where the files are extracted.
 
 For example, to change to the appropriate directory in R, you can run the `setwd` command
-```setwd("/Users/gpeek/Documents/education/data\_science\_track\_johns\_hopkins/getting\_and\_cleaning_data/UCI HAR Dataset")```
+```setwd("/path/to/unzipped/file/UCI HAR Dataset")```
 
-The resulting file can be read and displayed with the following commands
+Once the script is run, the resulting file can be read and displayed with the following commands
 
-```data <- read.table("tidy\_activity\_data.txt", header = TRUE)
+```data <- read.table("tidy_activity_data.txt", header = TRUE)  
 View(data)```
 
 # Processing Performed
