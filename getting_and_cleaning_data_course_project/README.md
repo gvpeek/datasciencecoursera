@@ -8,7 +8,6 @@ For example, to change to the appropriate directory in R, you can run the `setwd
 Once the script is run, the resulting file can be read and displayed with the following commands
 
 `data <- read.table("tidy_activity_data.txt", header = TRUE)`  
-
 `View(data)`  
 
 # Processing Performed
