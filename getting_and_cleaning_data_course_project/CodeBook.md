@@ -1,7 +1,7 @@
 # Variables
 
 ## Subject
-    Identifies the subject who performed the activity for each window sample. Its range is from 1 to 30.
+    Identifies the subject who performed the activity. Its range is from 1 to 30.
 
 ## Activity
 * 1 WALKING
