@@ -7,8 +7,8 @@ For example, to change to the appropriate directory in R, you can run the `setwd
 
 Once the script is run, the resulting file can be read and displayed with the following commands
 
-```data <- read.table("tidy_activity_data.txt", header = TRUE)  
-View(data)```
+```data <- read.table("tidy_activity_data.txt", header = TRUE)```
+```View(data)```
 
 # Processing Performed
 The script combines the training and testing datasets, after inserting column headers and adding columns for activity and subject in a uniform way to each dataset.
