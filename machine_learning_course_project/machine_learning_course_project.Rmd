@@ -1,0 +1,100 @@
+---
+title: "Predicting Barbell Lifting Form With Accelerometer Data"
+author: "George Peek"
+date: "1/17/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lubridate)
+library(dplyr)
+library(forecast)
+library(caret)
+library(randomForest)
+library(gbm)
+set.seed(84628)
+doMC::registerDoMC(cores=2)
+```
+
+## Summary
+In the following analysis, I am going to attempt to create a model which can predict the manner in which a subject performs a barbell lift, based on data from six accelerometers worn during the exercise. Both a training and test set were provided to build and validate the models.
+
+## Analysis
+
+``` {r load_data, cache = TRUE, echo = FALSE}
+training <- read.csv("pml-training.csv", stringsAsFactors = FALSE)
+testing <- read.csv("pml-testing.csv", stringsAsFactors = FALSE)
+```
+
+``` {r clean_explore_data, echo = FALSE, warning = FALSE, results = "hide"}
+training$user_name <- as.factor(training$user_name)
+training$classe <- as.factor(training$classe)
+training$cvtd_timestamp <- dmy_hm(training$cvtd_timestamp)
+training$new_window <- as.factor(training$new_window)
+numeric_cols <- c("kurtosis_roll_belt", "kurtosis_picth_belt", "kurtosis_yaw_belt", "skewness_roll_belt", "skewness_roll_belt.1", "skewness_yaw_belt", "max_yaw_belt", "min_yaw_belt", "amplitude_yaw_belt", "kurtosis_roll_arm", "kurtosis_picth_arm", "kurtosis_yaw_arm", "skewness_roll_arm", "skewness_pitch_arm", "skewness_yaw_arm", "kurtosis_roll_dumbbell", "kurtosis_picth_dumbbell", "kurtosis_yaw_dumbbell", "skewness_roll_dumbbell", "skewness_pitch_dumbbell", "skewness_yaw_dumbbell", "max_yaw_dumbbell", "min_yaw_dumbbell", "amplitude_yaw_dumbbell", "kurtosis_roll_forearm", "kurtosis_picth_forearm", "kurtosis_yaw_forearm", "skewness_roll_forearm", "skewness_pitch_forearm", "skewness_yaw_forearm", "max_yaw_forearm", "min_yaw_forearm", "amplitude_yaw_forearm")
+training[,numeric_cols] <- as.numeric(unlist(training[,numeric_cols]))
+summary(training)
+```
+
+On first examination of the training dataset, seeing that is had some elements of a time series, I was uncertain if this prediction would need to be treated as a forecast or not. For simplicity, I decided to approach it naively and use each measurement as an observation not temporally linked with its neighbor.
+
+Because this is a classification prediction, the two most accurate modeling options to explore are Random Forest and Boosting. I also decided to fit a Decision Tree model to compare its accuracy. 
+
+These models do not allow NA values to be present in the predictor variables. As a first attempt to correct these, I tried to impute the values. However, since there are more missing data than existing values for for some columns, I was not able to get any meaningful replacements.
+
+Next, I decided to limit the columns I used to train the model to those which had values present for all of the observations. On further examination of the data summary, the "gyros" variables did not exhibit as much variation as the others, so I removed those as well. This left me with 40 predictors, likely more than enough to fit a good model. 
+
+``` {r subset_columns, echo = FALSE}
+usableCols <- c("classe", "roll_belt", "pitch_belt", "yaw_belt", "total_accel_belt", "accel_belt_x", "accel_belt_y", "accel_belt_z", "magnet_belt_x", "magnet_belt_y", "magnet_belt_z", "roll_arm", "pitch_arm", "yaw_arm", "total_accel_arm", "accel_arm_x", "accel_arm_y", "accel_arm_z", "magnet_arm_x", "magnet_arm_y", "magnet_arm_z", "roll_dumbbell", "pitch_dumbbell", "yaw_dumbbell", "total_accel_dumbbell", "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z", "magnet_dumbbell_x", "magnet_dumbbell_y", "magnet_dumbbell_z", "roll_forearm", "pitch_forearm", "yaw_forearm", "total_accel_forearm", "accel_forearm_x", "accel_forearm_y", "accel_forearm_z", "magnet_forearm_x", "magnet_forearm_y", "magnet_forearm_z")
+trainingFiltered <- training[usableCols]
+```
+
+### Decision Tree Model
+
+I started with the Decision Tree model, using the "caret" package. These require many samples to improve accuracy, so I did not have much confidence that I would see a good result with this attempt. As we can see from the output, using the default settings, we can expect only 51.5% accuracy from our best model. I decided to quickly abandon this method in favor of a more accurate one.
+
+``` {r rpart, cache = TRUE, echo = FALSE}
+trainRpart <- train(classe ~ ., data=trainingFiltered, method="rpart")
+trainRpart
+```
+
+### Random Forest Model
+
+Next, I fitted a Random Forest model, using the "RandomForest" package. These models perform bootstrapping at each split, so only a certain number of predictors are considered at each juncture. To configure the number of predictors used in bootstrapping, I set the "mtry" variable to 6, which is essentially the default value (square root of the total number of predictors, which is 40 in our case). 
+
+The Random Forest algorithm performs cross-validation automatically as part of the bootstrapping process, so we are protected somewhat from overfitting seeing as our "mtry" setting is low.
+
+Using the default setting of 500 trees, we can see from the output that this model is only expected to produce 0.35% out-of-sample error, which is a phenomenally high level of accuracy. 
+
+``` {r rf, cache = TRUE, echo = FALSE}
+trainRF <- randomForest(classe ~ ., data=trainingFiltered, ntree = 500, mtry = 6)
+trainRF
+```
+
+### Boosting Model
+
+Finally, I used the "gbm" package to fit a Boosting model. According to the documentation, smaller values of "shrinkage" always improve predictive performance, but will increase computation time. I set that value to .0001, which is fairly low, yet still allowed the algorithm to complete in a reasonable amount of time. 
+
+I used 10 cross-validation folds to get the error estimate. Accuracy for this model turned out to only be 48.4%, which was much poorer than I expected.
+
+``` {r boost, cache = TRUE, echo = FALSE}
+trainBoost <- gbm(classe ~ .,
+                  data=trainingFiltered,
+                  shrinkage = .0001,
+                  cv.folds = 5,
+                  distribution = "multinomial",
+                  n.trees = 500,
+                  verbose = FALSE)
+trainBoost
+
+predBoostTrain <- predict(trainBoost, newdata = training)
+
+p.predBoostTrain <- apply(predBoostTrain, 1, which.max)
+p.predBoostTrain <- as.factor(p.predBoostTrain)
+levels(p.predBoostTrain) <- c("A", "B", "C", "D", "E")
+confusionMatrix(p.predBoostTrain, training$classe)
+```
+
+## Conclusion
+Based on its high accuracy and low expected out of sample error rate, I chose to use the Random Forest model to submit my predictions for the test set.
