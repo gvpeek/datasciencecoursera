@@ -129,7 +129,7 @@ $(document).ready(function () {
 </div>
 <div id="analysis" class="section level2">
 <h2>Analysis</h2>
-<p>On first examination of the training dataset, seeing that is had some elements of a time series, I was uncertain if this prediction would need to be treated as a forecast or not. For simplicity, I decided to approach it naively and use each measurement as an observation not temporally linked with its neighbor.</p>
+<p>On first examination of the training dataset, seeing that it has some properties of a time series, I was uncertain if this prediction would need to be treated as a forecast or not. Since our predictions involve classification which will not change over the course of a particular lift, I felt it better to approach each measurement as an observation not temporally linked with its neighbor.</p>
 <p>Because this is a classification prediction, the two most accurate modeling options to explore are Random Forest and Boosting. I also decided to fit a Decision Tree model to compare its accuracy.</p>
 <p>These models do not allow NA values to be present in the predictor variables. As a first attempt to correct these, I tried to impute the values. However, since there are more missing data than existing values for for some columns, I was not able to get any meaningful replacements.</p>
 <p>Next, I decided to limit the columns I used to train the model to those which had values present for all of the observations. On further examination of the data summary, the “gyros” variables did not exhibit as much variation as the others, so I removed those as well. This left me with 40 predictors, likely more than enough to fit a good model.</p>

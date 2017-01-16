@@ -37,7 +37,7 @@ training[,numeric_cols] <- as.numeric(unlist(training[,numeric_cols]))
 summary(training)
 ```
 
-On first examination of the training dataset, seeing that is had some elements of a time series, I was uncertain if this prediction would need to be treated as a forecast or not. For simplicity, I decided to approach it naively and use each measurement as an observation not temporally linked with its neighbor.
+On first examination of the training dataset, seeing that it has some properties of a time series, I was uncertain if this prediction would need to be treated as a forecast or not. Since our predictions involve classification which will not change over the course of a particular lift, I felt it better to approach each measurement as an observation not temporally linked with its neighbor.
 
 Because this is a classification prediction, the two most accurate modeling options to explore are Random Forest and Boosting. I also decided to fit a Decision Tree model to compare its accuracy. 
 
