@@ -1,0 +1,42 @@
+---
+title: "U.S. Vegetarian Restaurants"
+author: "George Peek"
+date: "January 25, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(leaflet)
+library(dplyr)
+```
+
+``` {r read_data_and_create_map, message=FALSE, fig.width = 10}
+veg_restaurants <- read.csv("vegetarian_restaurants_US_datafiniti.csv", 
+                            stringsAsFactors = FALSE)
+
+veg_restaurants <- veg_restaurants[!is.na(veg_restaurants["lat"]),]
+veg_restaurants <- veg_restaurants[!is.na(veg_restaurants["long"]),]
+veg_restaurants <- veg_restaurants[veg_restaurants$long < -59.77,]
+veg_restaurants <- veg_restaurants[veg_restaurants$lat > 17.73,]
+veg_restaurants <- mutate(veg_restaurants,
+                          popupText = paste("<b><a href='",
+                                            websites,
+                                            "'>",
+                                            name,
+                                            "</a></b><br />",
+                                            city,
+                                            province,
+                                            "<br />",
+                                            cuisines))
+
+df <- data.frame(latitude = veg_restaurants[,"lat"], 
+                 longitude = veg_restaurants[,"long"],
+                 popup_text = veg_restaurants[,"popupText"])
+
+df %>%
+        leaflet() %>% 
+        addTiles() %>% 
+        addMarkers(clusterOptions = markerClusterOptions(), 
+                   popup = ~popup_text)
+```
