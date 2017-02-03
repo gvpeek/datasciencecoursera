@@ -1,0 +1,24 @@
+---
+title: "Week 3 Peer Graded Assignment"
+author: "George Peek"
+date: "Februrary 2, 2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(plotly)
+```
+
+## Plotly Plot
+``` {r plotly_plot1, warning = FALSE, message = FALSE}
+plot_ly(x = state.x77[,2], y = state.x77[,4], type = "scatter", color = state.region, text = row.names(state.x77)) %>%
+        layout(title = "Income and Life Expectancy in the U.S. (1969-74)", 
+               xaxis = list(title = "Per Capita Income in Dollars"),
+               yaxis = list(title="Life Expectancy in Years"))
+```
+
+
+## Thank You
+
+
